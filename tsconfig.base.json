@@ -1,0 +1,31 @@
+{
+    "compilerOptions": {
+      /* Language and Environment */
+      "target": "ES2020",
+      "lib": ["DOM", "ES2020"],
+      "module": "ESNext",
+      "moduleResolution": "node",
+      "allowJs": true,
+      "resolveJsonModule": true,
+      "esModuleInterop": true,
+      "forceConsistentCasingInFileNames": true,
+      "skipLibCheck": true,
+  
+      /* Project Structure */
+      "baseUrl": ".", // allows absolute imports if configured
+      "paths": {
+        "@backend/*": ["apps/backend/src/*"],
+        "@frontend/*": ["apps/frontend/src/*"],
+        "@shared/*": ["packages/shared/*"]
+      },
+  
+      /* Type Checking */
+      "strict": true,
+      "noImplicitAny": true,
+  
+      /* Emit Options */
+      "noEmit": false,
+      "outDir": "dist"
+    }
+  }
+  
