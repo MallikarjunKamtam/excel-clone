@@ -1,3 +1,5 @@
+import { ISheetRow } from "./api/types/sheets.types";
+
 export class Utils {
   public static getInitialGrid({
     colCount,
@@ -5,8 +7,19 @@ export class Utils {
   }: {
     rowCount: number;
     colCount: number;
-  }): string[][] {
-    return Array(rowCount).fill(Array(colCount).fill(""));
+  }): ISheetRow[] {
+    const result: ISheetRow[] = Array(rowCount)
+      .fill("")
+      .map(
+        (_, index) =>
+          ({
+            id: null,
+            rowIndex: index,
+            rowValues: Array(colCount).fill(""),
+          } as ISheetRow)
+      );
+
+    return result;
   }
 
   public static getHeaderColCells(count: number): string[] {

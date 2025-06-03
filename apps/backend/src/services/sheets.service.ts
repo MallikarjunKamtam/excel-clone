@@ -49,12 +49,12 @@ export class SheetService {
     // Get paginated rows
     const rows = await db.query(
       `SELECT id, "rowIndex", "rowValues"
-       FROM public.sheet_row
-       WHERE "sheetId" = $1
-       ORDER BY "rowIndex" ASC
-       LIMIT $2 OFFSET $3`,
+     FROM public.sheet_row
+     WHERE "sheetId" = :sheetId
+     ORDER BY "rowIndex" ASC
+     LIMIT :limit OFFSET :offset`,
       {
-        replacements: [sheetId, limit, offset],
+        replacements: { sheetId, limit, offset },
         type: QueryTypes.SELECT,
       }
     );
@@ -62,10 +62,10 @@ export class SheetService {
     // Get total count of rows
     const countResult: any = await db.query(
       `SELECT COUNT(*) AS total
-       FROM public.sheet_row
-       WHERE "sheetId" = $1`,
+     FROM public.sheet_row
+     WHERE "sheetId" = :sheetId`,
       {
-        replacements: [sheetId],
+        replacements: { sheetId },
         type: QueryTypes.SELECT,
       }
     );
@@ -88,5 +88,84 @@ export class SheetService {
     });
 
     return { message: "Sheet deleted successfully", sheetId };
+  }
+
+  static async updateSheetRow(
+    sheetId: number,
+    sheetRowId: number,
+    data: string[]
+  ) {
+    const [existingRow]: any = await db.query(
+      `SELECT * FROM public.sheet_row
+     WHERE "sheetId" = $1 AND id = $2`,
+      {
+        replacements: [sheetId, sheetRowId],
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    if (!existingRow) {
+      throw new Error(`Sheet row with ID ${sheetRowId} not found.`);
+    }
+
+    // Update the row values
+    const [updatedRow]: any = await db.query(
+      `UPDATE public.sheet_row
+     SET "rowValues" = $1, "updatedAt" = NOW()
+     WHERE "sheetId" = $2 AND id = $3
+     RETURNING *`,
+      {
+        replacements: [data, sheetId, sheetRowId],
+        type: QueryTypes.UPDATE,
+      }
+    );
+
+    return updatedRow[0];
+  }
+
+  static async updateCell(
+    sheetId: number,
+    sheetRowId: number,
+    cellIndex: number,
+    newValue: string
+  ) {
+    // Step 1: Get the existing row
+    const [existingRow]: any = await db.query(
+      `SELECT * FROM public.sheet_row
+       WHERE "sheetId" = $1 AND id = $2`,
+      {
+        replacements: [sheetId, sheetRowId],
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    // Step 2: Check if the row exists
+    if (!existingRow) {
+      throw new Error(`Sheet row with ID ${sheetRowId} not found.`);
+    }
+
+    // Step 3: Check if the cell index is within bounds
+    const rowValues = existingRow.rowValues; // This should be an array of strings
+    if (cellIndex < 0 || cellIndex >= rowValues.length) {
+      throw new Error(`Cell index ${cellIndex} out of bounds.`);
+    }
+
+    // Step 4: Update the specific cell
+    rowValues[cellIndex] = newValue;
+
+    // Step 5: Update the row in the database
+    const [updatedRow]: any = await db.query(
+      `UPDATE public.sheet_row
+       SET "rowValues" = $1, "updatedAt" = NOW()
+       WHERE "sheetId" = $2 AND id = $3
+       RETURNING *`,
+      {
+        replacements: [rowValues, sheetId, sheetRowId],
+        type: QueryTypes.UPDATE,
+      }
+    );
+
+    // Step 6: Return the updated row
+    return updatedRow[0];
   }
 }

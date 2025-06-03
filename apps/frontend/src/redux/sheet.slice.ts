@@ -1,46 +1,44 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { initialSheetSize } from "../CONSTANTS";
-import { Utils } from "../utils";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-export interface ISelectedArea {
-  colStartIndex: number;
-  colEndIndex: number;
-  rowStartIndex: number;
-  rowEndIndex: number;
-}
-
-export interface ISelectedCell {
-  rowIndex: number;
-  colIndex: number;
-}
-
-interface SheetState {
-  selectedArea: ISelectedArea | null;
-  grid: string[][];
-  selectedCell: ISelectedCell | null;
-}
+import { getAllSheets } from "../api/sheets.api";
+import { SheetState } from "./sheetSlice.type";
 
 const initialState: SheetState = {
-  selectedArea: null,
-  grid: Utils.getInitialGrid(initialSheetSize),
-  selectedCell: null,
+  loadingStates: {
+    getAllSheets: "idle",
+    addSheet: "idle",
+    addSheetRow: "idle",
+    deleteSheet: "idle",
+    getSheetRows: "idle",
+    updateSheetRow: "idle",
+    updateSheetRowCell: "idle",
+  },
+  allSheets: [],
 };
+
+export const getAllSheetsAsync = createAsyncThunk("getAllSheets", async () => {
+  const result = await getAllSheets();
+  return result;
+});
 
 const sheetSlice = createSlice({
   name: "sheetSlice",
   initialState,
-  reducers: {
-    setGrid(state, action: PayloadAction<string[][]>) {
-      state.grid = action.payload;
-    },
-    setSelectedArea(state, action: PayloadAction<ISelectedArea | null>) {
-      state.selectedArea = action.payload;
-    },
-    setSelectedCell(state, action: PayloadAction<ISelectedCell | null>) {
-      state.selectedCell = action.payload;
-    },
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(getAllSheetsAsync.pending, (state) => {
+        state.loadingStates["getAllSheets"] = "pending";
+      })
+      .addCase(getAllSheetsAsync.fulfilled, (state, action) => {
+        state.loadingStates["getAllSheets"] = "success";
+        state.allSheets = action.payload;
+      })
+      .addCase(getAllSheetsAsync.rejected, (state, action) => {
+        state.loadingStates["getAllSheets"] = "rejected";
+      });
   },
 });
 
-export const { setSelectedArea, setGrid, setSelectedCell } = sheetSlice.actions;
+export const {} = sheetSlice.actions;
 export default sheetSlice.reducer;

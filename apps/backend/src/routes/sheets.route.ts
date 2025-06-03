@@ -11,4 +11,8 @@ router.get("/:sheetId/rows", SheetController.getSheetRows);
 
 router.delete("/:sheetId", SheetController.deleteSheet);
 
+router.put("/:sheetId/:sheetRowId", SheetController.updateSheetRow);
+
+router.put("/:sheetId/:sheetRowId/:cellIndex", SheetController.updateCell);
+
 export default router;

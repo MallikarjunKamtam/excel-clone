@@ -32,7 +32,14 @@ export class SheetController {
   static async getSheetRows(req: Request, res: Response) {
     try {
       const sheetId = parseInt(req.params.sheetId);
-      const rows = await SheetService.getSheetRows(sheetId);
+      const page = req.query.page
+        ? parseInt(req.query.page as string)
+        : undefined;
+      const limit = req.query.limit
+        ? parseInt(req.query.limit as string)
+        : undefined;
+
+      const rows = await SheetService.getSheetRows(sheetId, page, limit);
       res.json(rows);
     } catch (err) {
       res.status(500).json({ error: "Failed to fetch rows", details: err });
@@ -46,6 +53,42 @@ export class SheetController {
       res.status(204).send();
     } catch (err) {
       res.status(500).json({ error: "Failed to delete sheet", details: err });
+    }
+  }
+
+  static async updateSheetRow(req: Request, res: Response) {
+    try {
+      const sheetId = parseInt(req.params.sheetId);
+      const sheetRowId = parseInt(req.params.sheetRowId);
+      const updatedData = await SheetService.updateSheetRow(
+        sheetId,
+        sheetRowId,
+        req.body
+      );
+      res.status(201).json(updatedData);
+    } catch (err) {
+      res
+        .status(500)
+        .json({ error: "Failed to update sheet rows", details: err });
+    }
+  }
+
+  static async updateCell(req: Request, res: Response) {
+    try {
+      const sheetId = parseInt(req.params.sheetId);
+      const sheetRowId = parseInt(req.params.sheetRowId);
+      const cellIndex = parseInt(req.params.cellIndex);
+      const updatedData = await SheetService.updateCell(
+        sheetId,
+        sheetRowId,
+        cellIndex,
+        req.body.value
+      );
+      res.status(204).json(updatedData);
+    } catch (err) {
+      res
+        .status(500)
+        .json({ error: "Failed to update sheet cell", details: err });
     }
   }
 }

@@ -2,18 +2,21 @@ import React, { useState, useEffect, useRef } from "react";
 import { cell } from "../../CONSTANTS";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../redux/store";
-import {
-  setSelectedArea,
-  setGrid,
-  setSelectedCell,
-} from "../../redux/sheet.slice";
 import { cloneDeep } from "lodash";
+import { ISheetRow } from "../../api/types/sheets.types";
+import { ISelectedArea, ISelectedCell } from "../../redux/sheetSlice.type";
 
 interface ExcelCellProps {
   rowIndex: number;
   colIndex: number;
   isSelected: boolean;
   isHeaderCell: boolean;
+  selectedCell: ISelectedCell;
+  selectedArea: ISelectedArea;
+  grid: ISheetRow[];
+  setGrid: React.Dispatch<React.SetStateAction<ISheetRow[]>>;
+  setSelectedArea: React.Dispatch<React.SetStateAction<ISelectedArea>>;
+  setSelectedCell: React.Dispatch<React.SetStateAction<ISelectedCell>>;
 }
 
 const ExcelCell: React.FC<ExcelCellProps> = ({
@@ -21,15 +24,16 @@ const ExcelCell: React.FC<ExcelCellProps> = ({
   colIndex,
   isSelected,
   isHeaderCell,
+  grid,
+  selectedArea,
+  selectedCell,
+  setGrid,
+  setSelectedArea,
+  setSelectedCell,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const { selectedArea, grid, selectedCell } = useSelector(
-    (state: RootState) => state.sheet
-  );
-  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     if (
@@ -49,38 +53,32 @@ const ExcelCell: React.FC<ExcelCellProps> = ({
 
   const handleClick = () => {
     if (rowIndex === 0 && colIndex === 0) {
-      dispatch(
-        setSelectedArea({
-          colStartIndex: 0,
-          colEndIndex: grid[0].length,
-          rowStartIndex: 0,
-          rowEndIndex: grid.length,
-        })
-      );
+      setSelectedArea({
+        colStartIndex: 0,
+        colEndIndex: grid[0].rowValues.length,
+        rowStartIndex: 0,
+        rowEndIndex: grid.length,
+      });
     } else if (colIndex === 0) {
-      dispatch(
-        setSelectedArea({
-          colStartIndex: 0,
-          colEndIndex: grid[0].length,
-          rowStartIndex: rowIndex,
-          rowEndIndex: rowIndex,
-        })
-      );
+      setSelectedArea({
+        colStartIndex: 0,
+        colEndIndex: grid[0].rowValues.length,
+        rowStartIndex: rowIndex,
+        rowEndIndex: rowIndex,
+      });
     } else if (rowIndex === 0) {
-      dispatch(
-        setSelectedArea({
-          colStartIndex: colIndex,
-          colEndIndex: colIndex,
-          rowStartIndex: 0,
-          rowEndIndex: grid.length,
-        })
-      );
+      setSelectedArea({
+        colStartIndex: colIndex,
+        colEndIndex: colIndex,
+        rowStartIndex: 0,
+        rowEndIndex: grid.length,
+      });
     }
 
     setIsEditing(true);
 
     if (selectedArea) {
-      dispatch(setSelectedArea(null));
+      setSelectedArea(null);
     }
   };
 
@@ -95,11 +93,11 @@ const ExcelCell: React.FC<ExcelCellProps> = ({
 
       if (e.shiftKey) {
         if (colIndex - 1 >= 0) {
-          dispatch(setSelectedCell({ rowIndex, colIndex: colIndex - 1 }));
+          setSelectedCell({ rowIndex, colIndex: colIndex - 1 });
         }
       } else {
-        if (colIndex + 1 < grid[0].length) {
-          dispatch(setSelectedCell({ rowIndex, colIndex: colIndex + 1 }));
+        if (colIndex + 1 < grid[0].rowValues.length) {
+          setSelectedCell({ rowIndex, colIndex: colIndex + 1 });
         }
       }
     } else if (e.key === "Enter") {
@@ -130,14 +128,14 @@ const ExcelCell: React.FC<ExcelCellProps> = ({
               colIndex,
             });
 
-            dispatch(setGrid(updatedGrid));
+            setGrid(updatedGrid);
           }}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           style={{ width: "100%", border: "none", outline: "none" }}
         />
       ) : (
-        grid[rowIndex][colIndex]
+        grid[rowIndex]["rowValues"][colIndex]
       )}
     </td>
   );
