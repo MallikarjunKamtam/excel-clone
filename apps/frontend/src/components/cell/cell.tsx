@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { cell } from "../../CONSTANTS";
 import { cloneDeep } from "lodash";
 import { ISheetRow } from "../../api/types/sheets.types";
@@ -58,6 +58,7 @@ const ExcelCell: React.FC<ExcelCellProps> = ({
 
   const handleClick = () => {
     if (isHeaderCell) {
+      setSelectedCell(null);
       onHeaderClick?.();
       return;
     }
@@ -76,23 +77,26 @@ const ExcelCell: React.FC<ExcelCellProps> = ({
 
     const sheetRow = grid[rowIndex];
 
-    try {
-      if (sheetRow.id === -1) {
-        // Row not in DB yet, add it
-        const res = await addSheetRow({
-          sheetId,
-          rowIndex,
-          rowValues: updatedGrid[rowIndex].rowValues,
-        });
+    if (inputValue === "" && grid[rowIndex].rowValues[colIndex] === "") {
+      return;
+    } else {
+      try {
+        if (sheetRow.id === -1) {
+          const res = await addSheetRow({
+            sheetId,
+            rowIndex,
+            rowValues: updatedGrid[rowIndex].rowValues,
+          });
 
-        updatedGrid[rowIndex].id = res.id;
-        setGrid(updatedGrid);
-      } else {
-        // Row exists, update only this cell
-        await updateSheetRowCell(sheetId, sheetRow.id, colIndex, inputValue);
+          updatedGrid[rowIndex].id = res.id;
+          setGrid(updatedGrid);
+        } else {
+          // Row exists, update only this cell
+          await updateSheetRowCell(sheetId, sheetRow.id, colIndex, inputValue);
+        }
+      } catch (error) {
+        console.error("Error updating/adding cell:", error);
       }
-    } catch (error) {
-      console.error("Error updating/adding cell:", error);
     }
   };
 
@@ -111,10 +115,27 @@ const ExcelCell: React.FC<ExcelCellProps> = ({
     }
   };
 
+  const isHighlightHeader: boolean = useMemo(() => {
+    if (isSelected) {
+      return true;
+    }
+
+    if (selectedCell) {
+      if (colIndex === selectedCell.colIndex && rowIndex === -1) {
+        return true;
+      }
+      if (rowIndex === selectedCell.rowIndex && colIndex === -1) {
+        return true;
+      }
+    }
+
+    return false;
+  }, [isSelected, selectedCell]);
+
   return (
     <td
       onClick={handleClick}
-      className={isSelected ? "bg-[#cce5ff]" : ""}
+      className={isHighlightHeader ? "!bg-[#cce5ff]" : ""}
       style={{ ...cell, backgroundColor: isHeaderCell ? "#eee" : "" }}
     >
       {isHeaderCell ? (

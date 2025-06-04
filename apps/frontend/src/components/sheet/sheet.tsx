@@ -11,6 +11,7 @@ import {
 import { ISelectedArea, ISelectedCell } from "../../redux/sheetSlice.type";
 import { getSheetRows } from "../../api/sheets.api";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
+import { SheetHeader } from "../sheetHeader/sheetHeader";
 
 const Sheet = () => {
   const { id } = useParams();
@@ -24,7 +25,7 @@ const Sheet = () => {
 
   const [selectedCell, setSelectedCell] = useState<ISelectedCell>(null);
   const [selectedArea, setSelectedArea] = useState<ISelectedArea>(null);
-
+  const [selectedHeaderList, setSelectedHeaderList] = useState<string[]>([]);
   const sheetRowsAsync: UseQueryResult<GetSheetRowsResponse, Error> = useQuery({
     queryKey: [`getSheetRows-${id}-${JSON.stringify(paginationParams)}`],
     queryFn: () => getSheetRows({ ...paginationParams, sheetId: Number(id) }),
@@ -52,17 +53,35 @@ const Sheet = () => {
   }, [sheetRowsAsync.status]);
 
   return (
-    <div className="w-">
-      <ExcelGrid
-        setGrid={setGrid}
-        setSelectedArea={setSelectedArea}
-        setSelectedCell={setSelectedCell}
-        grid={grid}
-        selectedArea={selectedArea}
-        selectedCell={selectedCell}
-        key={`${id}-grid`}
-      />
-    </div>
+    <main className="w-full">
+      <div className="sticky">
+        <SheetHeader
+          selectedList={selectedHeaderList}
+          key={`${id}-grid`}
+          onIconClick={(iconName) => {
+            if (selectedHeaderList.includes(iconName)) {
+              const filteredList = selectedHeaderList.filter(
+                (item) => item !== iconName
+              );
+              setSelectedHeaderList(filteredList);
+            } else {
+              setSelectedHeaderList([iconName, ...selectedHeaderList]);
+            }
+          }}
+        />
+      </div>
+      <div className=" w-screen overflow-scroll">
+        <ExcelGrid
+          setGrid={setGrid}
+          setSelectedArea={setSelectedArea}
+          setSelectedCell={setSelectedCell}
+          grid={grid}
+          selectedArea={selectedArea}
+          selectedCell={selectedCell}
+          key={`${id}-grid`}
+        />
+      </div>
+    </main>
   );
 };
 
