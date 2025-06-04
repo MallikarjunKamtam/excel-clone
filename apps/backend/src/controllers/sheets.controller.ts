@@ -84,7 +84,7 @@ export class SheetController {
         cellIndex,
         req.body.value
       );
-      res.status(204).json(updatedData);
+      res.status(201).json(updatedData);
     } catch (err) {
       res
         .status(500)

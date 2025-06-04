@@ -28,7 +28,7 @@ export const getSheetRows = async (
 };
 
 export const addSheet = async (name: string): Promise<CreateSheetResponse> => {
-  const response = await axios.post(`${baseUrl}/sheets`, { data: { name } });
+  const response = await axios.post(`${baseUrl}/sheets`, { name });
 
   return response.data;
 };
@@ -36,7 +36,7 @@ export const addSheet = async (name: string): Promise<CreateSheetResponse> => {
 export const addSheetRow = async (
   data: IAddSheetRowPayload
 ): Promise<AddSheetRowResponse> => {
-  const response = await axios.post(`${baseUrl}/sheets/rows`, { data });
+  const response = await axios.post(`${baseUrl}/sheets/rows`, data);
 
   return response.data;
 };
@@ -56,7 +56,7 @@ export const updateSheetRow = async (
 ) => {
   const response = await axios.put(
     `${baseUrl}/sheets/${sheetId}/${sheetRowId}`,
-    { data }
+    data
   );
 
   return response.data;
@@ -70,7 +70,7 @@ export const updateSheetRowCell = async (
 ) => {
   const response = await axios.put(
     `${baseUrl}/sheets/${sheetId}/${sheetRowId}/${cellIndex}`,
-    { data: { value: cellValue } }
+    { value: cellValue }
   );
 
   return response.data;

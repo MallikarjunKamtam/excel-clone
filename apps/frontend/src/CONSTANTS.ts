@@ -9,6 +9,6 @@ export const cell: React.CSSProperties = {
 };
 
 export const initialSheetSize = {
-  rowCount: 10,
-  colCount: 10,
+  rowCount: 30,
+  colCount: 20,
 };

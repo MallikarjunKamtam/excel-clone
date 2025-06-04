@@ -4,12 +4,13 @@ import { Utils } from "../../utils";
 import { initialSheetSize } from "../../CONSTANTS";
 import { useParams } from "react-router-dom";
 import {
+  GetSheetRowsResponse,
   IPaginationQuerySheetRows,
   ISheetRow,
 } from "../../api/types/sheets.types";
 import { ISelectedArea, ISelectedCell } from "../../redux/sheetSlice.type";
 import { getSheetRows } from "../../api/sheets.api";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { cloneDeep } from "lodash";
 
 const Sheet = () => {
@@ -25,26 +26,26 @@ const Sheet = () => {
   const [selectedCell, setSelectedCell] = useState<ISelectedCell>(null);
   const [selectedArea, setSelectedArea] = useState<ISelectedArea>(null);
 
-  const sheetRowsAsync = useQuery({
+  const sheetRowsAsync: UseQueryResult<GetSheetRowsResponse, Error> = useQuery({
     queryKey: [`getSheetRows-${id}-${JSON.stringify(paginationParams)}`],
     queryFn: () => getSheetRows({ ...paginationParams, sheetId: Number(id) }),
   });
-
-  console.log({ sheetRowsAsync, id });
 
   useEffect(() => {
     if (
       sheetRowsAsync.status === "success" &&
       sheetRowsAsync.data?.data?.length > 0
     ) {
-      const topHeaderCells: string[] = Utils.getHeaderColCells(
-        initialSheetSize.colCount
-      );
+      const fetchedRows = sheetRowsAsync.data.data;
+      const updatedGrid = Utils.getInitialGrid(initialSheetSize); // Fresh blank grid
 
-      let updatedGrid: ISheetRow[] = cloneDeep(grid);
-      for (const { rowIndex, rowValues, id } of sheetRowsAsync.data.data) {
-        updatedGrid[rowIndex].id = id;
-        updatedGrid[rowIndex].rowValues = [String(rowIndex + 1), ...rowValues];
+      for (const { rowIndex, rowValues, id } of fetchedRows) {
+        if (rowIndex < initialSheetSize.rowCount) {
+          for (let col = 0; col < initialSheetSize.colCount; col++) {
+            updatedGrid[rowIndex].rowValues[col] = rowValues[col] ?? "";
+          }
+          updatedGrid[rowIndex].id = id;
+        }
       }
 
       setGrid(updatedGrid);
@@ -52,15 +53,17 @@ const Sheet = () => {
   }, [sheetRowsAsync.status]);
 
   return (
-    <ExcelGrid
-      setGrid={setGrid}
-      setSelectedArea={setSelectedArea}
-      setSelectedCell={setSelectedCell}
-      grid={grid}
-      selectedArea={selectedArea}
-      selectedCell={selectedCell}
-      key={`${id}-grid`}
-    />
+    <div className="w-">
+      <ExcelGrid
+        setGrid={setGrid}
+        setSelectedArea={setSelectedArea}
+        setSelectedCell={setSelectedCell}
+        grid={grid}
+        selectedArea={selectedArea}
+        selectedCell={selectedCell}
+        key={`${id}-grid`}
+      />
+    </div>
   );
 };
 

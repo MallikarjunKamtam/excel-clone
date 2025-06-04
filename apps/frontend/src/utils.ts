@@ -13,7 +13,7 @@ export class Utils {
       .map(
         (_, index) =>
           ({
-            id: null,
+            id: -1,
             rowIndex: index,
             rowValues: Array(colCount).fill(""),
           } as ISheetRow)

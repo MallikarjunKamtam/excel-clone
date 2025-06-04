@@ -1,22 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
 import { cell } from "../../CONSTANTS";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState, AppDispatch } from "../../redux/store";
 import { cloneDeep } from "lodash";
 import { ISheetRow } from "../../api/types/sheets.types";
 import { ISelectedArea, ISelectedCell } from "../../redux/sheetSlice.type";
+import { updateSheetRowCell, addSheetRow } from "../../api/sheets.api";
+import { useParams } from "react-router-dom";
 
 interface ExcelCellProps {
   rowIndex: number;
   colIndex: number;
   isSelected: boolean;
   isHeaderCell: boolean;
-  selectedCell: ISelectedCell;
-  selectedArea: ISelectedArea;
   grid: ISheetRow[];
+  selectedCell: ISelectedCell;
   setGrid: React.Dispatch<React.SetStateAction<ISheetRow[]>>;
   setSelectedArea: React.Dispatch<React.SetStateAction<ISelectedArea>>;
   setSelectedCell: React.Dispatch<React.SetStateAction<ISelectedCell>>;
+  headerValue?: string;
+  onHeaderClick?: () => void;
 }
 
 const ExcelCell: React.FC<ExcelCellProps> = ({
@@ -25,15 +26,18 @@ const ExcelCell: React.FC<ExcelCellProps> = ({
   isSelected,
   isHeaderCell,
   grid,
-  selectedArea,
   selectedCell,
   setGrid,
   setSelectedArea,
   setSelectedCell,
+  headerValue,
+  onHeaderClick,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-
+  const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const sheetId = Number(useParams()?.id);
 
   useEffect(() => {
     if (
@@ -41,6 +45,7 @@ const ExcelCell: React.FC<ExcelCellProps> = ({
       selectedCell.colIndex === colIndex &&
       selectedCell.rowIndex === rowIndex
     ) {
+      setInputValue(grid[rowIndex].rowValues[colIndex]);
       setIsEditing(true);
     }
   }, [selectedCell]);
@@ -52,38 +57,43 @@ const ExcelCell: React.FC<ExcelCellProps> = ({
   }, [isEditing]);
 
   const handleClick = () => {
-    if (rowIndex === 0 && colIndex === 0) {
-      setSelectedArea({
-        colStartIndex: 0,
-        colEndIndex: grid[0].rowValues.length,
-        rowStartIndex: 0,
-        rowEndIndex: grid.length,
-      });
-    } else if (colIndex === 0) {
-      setSelectedArea({
-        colStartIndex: 0,
-        colEndIndex: grid[0].rowValues.length,
-        rowStartIndex: rowIndex,
-        rowEndIndex: rowIndex,
-      });
-    } else if (rowIndex === 0) {
-      setSelectedArea({
-        colStartIndex: colIndex,
-        colEndIndex: colIndex,
-        rowStartIndex: 0,
-        rowEndIndex: grid.length,
-      });
+    if (isHeaderCell) {
+      onHeaderClick?.();
+      return;
     }
 
+    setSelectedCell({ rowIndex, colIndex });
     setIsEditing(true);
-
-    if (selectedArea) {
-      setSelectedArea(null);
-    }
+    setSelectedArea(null);
   };
 
-  const handleBlur = () => {
+  const handleBlur = async () => {
     setIsEditing(false);
+
+    const updatedGrid = cloneDeep(grid);
+    updatedGrid[rowIndex].rowValues[colIndex] = inputValue;
+    setGrid(updatedGrid);
+
+    const sheetRow = grid[rowIndex];
+
+    try {
+      if (sheetRow.id === -1) {
+        // Row not in DB yet, add it
+        const res = await addSheetRow({
+          sheetId,
+          rowIndex,
+          rowValues: updatedGrid[rowIndex].rowValues,
+        });
+
+        updatedGrid[rowIndex].id = res.id;
+        setGrid(updatedGrid);
+      } else {
+        // Row exists, update only this cell
+        await updateSheetRowCell(sheetId, sheetRow.id, colIndex, inputValue);
+      }
+    } catch (error) {
+      console.error("Error updating/adding cell:", error);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -91,18 +101,12 @@ const ExcelCell: React.FC<ExcelCellProps> = ({
       e.preventDefault();
       setIsEditing(false);
 
-      if (e.shiftKey) {
-        if (colIndex - 1 >= 0) {
-          setSelectedCell({ rowIndex, colIndex: colIndex - 1 });
-        }
-      } else {
-        if (colIndex + 1 < grid[0].rowValues.length) {
-          setSelectedCell({ rowIndex, colIndex: colIndex + 1 });
-        }
+      if (e.shiftKey && colIndex > 0) {
+        setSelectedCell({ rowIndex, colIndex: colIndex - 1 });
+      } else if (!e.shiftKey && colIndex < grid[0].rowValues.length - 1) {
+        setSelectedCell({ rowIndex, colIndex: colIndex + 1 });
       }
-    } else if (e.key === "Enter") {
-      setIsEditing(false);
-    } else if (e.key === "Escape") {
+    } else if (["Enter", "Escape"].includes(e.key)) {
       setIsEditing(false);
     }
   };
@@ -110,32 +114,22 @@ const ExcelCell: React.FC<ExcelCellProps> = ({
   return (
     <td
       onClick={handleClick}
-      className={`${isSelected ? "bg-[#cce5ff]" : ""}`}
-      style={{ ...cell }}
+      className={isSelected ? "bg-[#cce5ff]" : ""}
+      style={{ ...cell, backgroundColor: isHeaderCell ? "#eee" : "" }}
     >
-      {isEditing && !isHeaderCell ? (
+      {isHeaderCell ? (
+        headerValue
+      ) : isEditing ? (
         <input
           ref={inputRef}
-          value={grid[rowIndex][colIndex]}
-          onChange={(e) => {
-            const updatedGrid = cloneDeep(grid);
-            updatedGrid[rowIndex][colIndex] = e.target.value as string;
-
-            console.log({
-              updatedGrid,
-              grid,
-              rowIndex,
-              colIndex,
-            });
-
-            setGrid(updatedGrid);
-          }}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           style={{ width: "100%", border: "none", outline: "none" }}
         />
       ) : (
-        grid[rowIndex]["rowValues"][colIndex]
+        grid[rowIndex].rowValues[colIndex]
       )}
     </td>
   );
