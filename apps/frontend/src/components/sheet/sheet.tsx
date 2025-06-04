@@ -11,7 +11,6 @@ import {
 import { ISelectedArea, ISelectedCell } from "../../redux/sheetSlice.type";
 import { getSheetRows } from "../../api/sheets.api";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { cloneDeep } from "lodash";
 
 const Sheet = () => {
   const { id } = useParams();

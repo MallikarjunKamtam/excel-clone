@@ -27,7 +27,21 @@ const ExcelGrid = ({
     <table style={{ borderCollapse: "collapse" }}>
       <tbody>
         <tr>
-          <td style={{ width: 30, backgroundColor: "#eee" }}></td>
+          <td
+            onClick={() => {
+              if (selectedArea) {
+                setSelectedArea(null);
+              } else {
+                setSelectedArea({
+                  colStartIndex: 0,
+                  colEndIndex: grid[0]?.rowValues.length,
+                  rowStartIndex: 0,
+                  rowEndIndex: grid.length - 1,
+                });
+              }
+            }}
+            style={{ width: 30, backgroundColor: "#eee" }}
+          ></td>
           {colHeaders.map((header, colIndex) => (
             <ExcelCell
               key={`header-${colIndex}`}
@@ -42,12 +56,16 @@ const ExcelGrid = ({
               setSelectedArea={setSelectedArea}
               setSelectedCell={setSelectedCell}
               onHeaderClick={() => {
-                setSelectedArea({
-                  colStartIndex: colIndex,
-                  colEndIndex: colIndex,
-                  rowStartIndex: 0,
-                  rowEndIndex: grid.length - 1,
-                });
+                if (selectedArea) {
+                  setSelectedArea(null);
+                } else {
+                  setSelectedArea({
+                    colStartIndex: colIndex,
+                    colEndIndex: colIndex,
+                    rowStartIndex: 0,
+                    rowEndIndex: grid.length - 1,
+                  });
+                }
               }}
             />
           ))}
@@ -67,12 +85,16 @@ const ExcelGrid = ({
               setSelectedArea={setSelectedArea}
               setSelectedCell={setSelectedCell}
               onHeaderClick={() => {
-                setSelectedArea({
-                  colStartIndex: 0,
-                  colEndIndex: grid[0].rowValues.length - 1,
-                  rowStartIndex: rowIndex,
-                  rowEndIndex: rowIndex,
-                });
+                if (selectedArea) {
+                  setSelectedArea(null);
+                } else {
+                  setSelectedArea({
+                    colStartIndex: 0,
+                    colEndIndex: grid[0].rowValues.length - 1,
+                    rowStartIndex: rowIndex,
+                    rowEndIndex: rowIndex,
+                  });
+                }
               }}
             />
 
