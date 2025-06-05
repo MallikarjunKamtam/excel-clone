@@ -1,4 +1,4 @@
-import { getAllSheets, addSheet } from "../../api/sheets.api";
+import { getAllSheets, addSheet, deleteSheet } from "../../api/sheets.api";
 import { useMutation, useQuery, UseQueryResult } from "@tanstack/react-query";
 import { GetAllSheetsResponse } from "../../api/types/sheets.types";
 import LongMenu from "./footerItem";
@@ -6,6 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import Word from "../word";
 import MenuIcon from "@mui/icons-material/Menu";
+import { toast } from "react-toastify";
 
 const SheetFooter = () => {
   const navigate = useNavigate();
@@ -21,6 +22,20 @@ const SheetFooter = () => {
     mutationFn: (name: string) => addSheet(name),
     onSuccess: () => {
       getAllSheetsAsync.refetch();
+    },
+    onError(error, variables, context) {
+      toast("Failed to add sheet.", { type: "error" });
+    },
+  });
+
+  const deleteSheetAsync = useMutation({
+    mutationKey: ["deleteSheet"],
+    mutationFn: (id: number) => deleteSheet(id),
+    onSuccess: () => {
+      getAllSheetsAsync.refetch();
+    },
+    onError: (event) => {
+      toast("Failed to delete.", { type: "error" });
     },
   });
 
@@ -59,7 +74,11 @@ const SheetFooter = () => {
                     { id: 1, name: "Rename" },
                     { id: 2, name: "Delete" },
                   ]}
-                  onMenuClick={(item) => {}}
+                  onMenuClick={async (item) => {
+                    if (item.name === "Delete") {
+                      await deleteSheetAsync.mutateAsync(item.id);
+                    }
+                  }}
                 />
               </span>
             </span>

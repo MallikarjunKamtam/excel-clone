@@ -91,7 +91,6 @@ const ExcelCell: React.FC<ExcelCellProps> = ({
           updatedGrid[rowIndex].id = res.id;
           setGrid(updatedGrid);
         } else {
-          // Row exists, update only this cell
           await updateSheetRowCell(sheetId, sheetRow.id, colIndex, inputValue);
         }
       } catch (error) {

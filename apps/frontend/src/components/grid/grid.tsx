@@ -26,7 +26,7 @@ const ExcelGrid = ({
   return (
     <table style={{ borderCollapse: "collapse" }}>
       <tbody>
-        <tr>
+        <tr className="">
           <td
             onClick={() => {
               if (selectedArea) {
