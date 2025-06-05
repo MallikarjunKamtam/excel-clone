@@ -7,7 +7,7 @@ function App() {
     <div className="App">
       <Router>
         <Routes>
-          <Route path="/:id" element={<Sheet />} />
+          <Route path="/sheet/:id" element={<Sheet />} />
         </Routes>
       </Router>
     </div>

@@ -12,6 +12,7 @@ import { ISelectedArea, ISelectedCell } from "../../redux/sheetSlice.type";
 import { getSheetRows } from "../../api/sheets.api";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { SheetHeader } from "../sheetHeader/sheetHeader";
+import SheetFooter from "../sheetFooter/sheetFooter";
 
 const Sheet = () => {
   const { id } = useParams();
@@ -70,7 +71,7 @@ const Sheet = () => {
           }}
         />
       </div>
-      <div className=" w-screen overflow-scroll">
+      <div className=" w-screen overflow-scroll h-[80vh] border-2 border-[darkgray]">
         <ExcelGrid
           setGrid={setGrid}
           setSelectedArea={setSelectedArea}
@@ -80,6 +81,9 @@ const Sheet = () => {
           selectedCell={selectedCell}
           key={`${id}-grid`}
         />
+      </div>
+      <div className="ml-20">
+        <SheetFooter key={`Footer`} />
       </div>
     </main>
   );
