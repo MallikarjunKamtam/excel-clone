@@ -75,3 +75,19 @@ export const updateSheetRowCell = async (
 
   return response.data;
 };
+
+export const renameSheet = async ({
+  name,
+  sheetId,
+}: {
+  name: string;
+  sheetId: number;
+}) => {
+  const response = await axios.call({
+    method: "put",
+    url: `${baseUrl}/sheets/rename/${sheetId}`,
+    body: { name },
+  });
+
+  return response.data;
+};

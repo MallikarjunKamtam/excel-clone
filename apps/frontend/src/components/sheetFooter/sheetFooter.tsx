@@ -1,4 +1,9 @@
-import { getAllSheets, addSheet, deleteSheet } from "../../api/sheets.api";
+import {
+  getAllSheets,
+  addSheet,
+  deleteSheet,
+  renameSheet,
+} from "../../api/sheets.api";
 import { useMutation, useQuery, UseQueryResult } from "@tanstack/react-query";
 import { GetAllSheetsResponse } from "../../api/types/sheets.types";
 import LongMenu from "./footerItem";
@@ -7,10 +12,14 @@ import AddIcon from "@mui/icons-material/Add";
 import Word from "../word";
 import MenuIcon from "@mui/icons-material/Menu";
 import { toast } from "react-toastify";
+import { useEffect, useRef, useState } from "react";
 
 const SheetFooter = () => {
   const navigate = useNavigate();
   const currentSheetId = useParams()?.id;
+  const [focussedSheetId, setFocussedSheetId] = useState<number>(null);
+  const [updatedSheetName, setUpdatedSheetName] = useState<string>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const getAllSheetsAsync: UseQueryResult<GetAllSheetsResponse, Error> =
     useQuery({
       queryFn: getAllSheets,
@@ -45,6 +54,12 @@ const SheetFooter = () => {
     }
   };
 
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [focussedSheetId]);
+
   return (
     <div className="flex items-center justify-start gap-1 w-full">
       <AddIcon
@@ -62,8 +77,28 @@ const SheetFooter = () => {
       />
       <div className="flex items-center justify-start gap-0.5 w-full overflow-scroll max-w-[94%]">
         {(getAllSheetsAsync.data ?? []).map(({ id, name }, index) => {
-          return (
+          return focussedSheetId === id ? (
+            <input
+              className="min-w-[120px] text-xs h-[30px]"
+              onChange={(event) => {
+                setUpdatedSheetName(event.target.value);
+              }}
+              ref={inputRef}
+              value={updatedSheetName}
+              onBlur={async () => {
+                if (name !== updatedSheetName) {
+                  await renameSheet({ name: updatedSheetName, sheetId: id });
+                }
+
+                setFocussedSheetId(null);
+              }}
+            />
+          ) : (
             <span
+              onDoubleClick={() => {
+                setUpdatedSheetName(name);
+                setFocussedSheetId(id);
+              }}
               onClick={() => navigateToSheet(id)}
               className="pl-3 border min-w-[120px] w-full cursor-pointer rounded-sm border-black px-1 py-[0.5px] text-xs flex items-center  justify-between"
             >

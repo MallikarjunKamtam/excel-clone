@@ -21,10 +21,6 @@ type SheetHeaderProps = {
 
 const iconsList: { name: string; icon: any }[] = [
   {
-    icon: <LocalPrintshopOutlinedIcon color="inherit" fontSize="inherit" />,
-    name: "print",
-  },
-  {
     icon: <FormatBoldOutlinedIcon color="inherit" fontSize="inherit" />,
     name: "bold",
   },
@@ -69,6 +65,10 @@ const iconsList: { name: string; icon: any }[] = [
   {
     icon: <RedoOutlinedIcon color="inherit" fontSize="inherit" />,
     name: "redo",
+  },
+  {
+    icon: <LocalPrintshopOutlinedIcon color="inherit" fontSize="inherit" />,
+    name: "print",
   },
 ];
 
