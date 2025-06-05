@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ExcelGrid from "../grid/grid";
 import { Utils } from "../../utils";
 import { initialSheetSize } from "../../CONSTANTS";
@@ -19,7 +19,7 @@ const Sheet = () => {
   const [grid, setGrid] = useState<ISheetRow[]>(
     Utils.getInitialGrid(initialSheetSize)
   );
-
+  const gridRef = useRef<HTMLDivElement>(null);
   const [paginationParams, setPaginationParams] = useState<
     Omit<IPaginationQuerySheetRows, "sheetId">
   >({ limit: 20, page: 1 });
@@ -53,6 +53,60 @@ const Sheet = () => {
     }
   }, [sheetRowsAsync.status]);
 
+  const handleScroll = () => {
+    const el = gridRef.current;
+    if (!el) return;
+
+    const {
+      scrollTop,
+      scrollLeft,
+      scrollHeight,
+      scrollWidth,
+      clientHeight,
+      clientWidth,
+    } = el;
+
+    if (scrollTop === 0) {
+      // console.log("Reached the TOP");
+    } else if (scrollTop + clientHeight + 1 >= scrollHeight) {
+      const updatedGridValues: ISheetRow[] = Utils.getInitialGrid({
+        colCount: grid[0].rowValues.length,
+        rowCount: initialSheetSize.rowCount + grid.length,
+      }).map((item, index) => {
+        if (grid[index]) {
+          return grid[index];
+        } else return item;
+      });
+
+      setGrid(updatedGridValues);
+    }
+
+    if (scrollLeft === 0) {
+      // console.log("Reached the LEFT");
+    } else if (scrollLeft + clientWidth >= scrollWidth) {
+      const updatedGridValues: ISheetRow[] = Utils.getInitialGrid({
+        colCount: initialSheetSize.colCount + grid[0].rowValues.length,
+        rowCount: grid.length,
+      }).map((row, rowIndex) => {
+        if (grid[rowIndex]) {
+          const updatedRowValues: string[] = row.rowValues.map(
+            (col, colIndex) => {
+              if (grid[rowIndex][colIndex] === undefined) {
+                return col;
+              } else {
+                return grid[rowIndex][colIndex];
+              }
+            }
+          );
+
+          return { ...row, rowValues: updatedRowValues };
+        } else return row;
+      });
+
+      setGrid(updatedGridValues);
+    }
+  };
+
   return (
     <main className="w-full">
       <div className="sticky">
@@ -71,7 +125,11 @@ const Sheet = () => {
           }}
         />
       </div>
-      <div className=" w-screen overflow-scroll h-[80vh] border-2 border-[darkgray]">
+      <div
+        ref={gridRef}
+        onScroll={handleScroll}
+        className=" w-screen overflow-auto h-[80vh] border-2 border-[darkgray]"
+      >
         <ExcelGrid
           setGrid={setGrid}
           setSelectedArea={setSelectedArea}
